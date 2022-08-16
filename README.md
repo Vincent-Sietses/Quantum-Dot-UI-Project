@@ -1,3 +1,7 @@
+
+<img  src="demo_screencap.PNG" align="center" width=20% height=20%>
+<img  src="demo_screencap2.PNG" align="center" width=20% height=20%>
+
 # Repo for storing code for UI Project for fast Quantum Dot measurements 
 
 Project requires Python and Bokeh to be installed in an Anaconda environments
