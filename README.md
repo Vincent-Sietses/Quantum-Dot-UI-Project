@@ -1,6 +1,6 @@
 # Repo for storing code for UI Project for fast Quantum Dot measurements 
 
-Project requires Python 3.8 and Bokeh to be installed in an Anaconda environments
+Project requires Python and Bokeh to be installed in an Anaconda environments
 
 
 For Bokeh to open a browser tab with the interactive UI, run
