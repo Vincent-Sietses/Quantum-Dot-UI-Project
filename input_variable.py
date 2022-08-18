@@ -16,11 +16,24 @@ class InputVariable :
     This class holds the UI as well as the value of a variable 
     Its purpose is to link the UI and the measurement 
     """
-    def __init__(self, variable_name: str = "generic variable", unit : str = "", initial_value : float = 0, stepsize: float = 0.1): 
+    def __init__(self,
+                 variable_name: str = "generic variable",
+                 unit : str = "", initial_value : float = 0,
+                 stepsize: float = None,
+                 variable_resolution : float = 1e-6,
+                 stepsize_lower_bound : float = 1e-6,
+                 stepsize_upper_bound : float = 1
+                 ): 
         self.unit = unit
         self.value = initial_value
-        self.stepsize = stepsize
+        if stepsize:
+            self.stepsize = stepsize
+        else:
+            self.stepsize = max(stepsize_lower_bound,  min(5 * variable_resolution, stepsize_upper_bound))
         self.variable_name = variable_name
+        self.variable_resolution = variable_resolution
+        self.stepsize_lower_bound = stepsize_lower_bound
+        self.stepsize_upper_bound = stepsize_upper_bound
         self.ui_row = self.create_widget()
        
         
@@ -31,7 +44,7 @@ class InputVariable :
             <center><p> {self.variable_name} :  {self.value:.8E} {self.unit} </p></center>
                 """,
                  style={'text-align': 'center',  'color': 'black'},
-    width=600,
+    width=200,
     height=80
         )
         
@@ -40,7 +53,7 @@ class InputVariable :
             <center><p> Stepsize :  {self.stepsize:.1E} {self.unit} </p></center>
                 """,
                  style={'text-align': 'center',  'color': 'black'},
-    width=600,
+    width=200,
     height=80
         )
         
@@ -83,11 +96,16 @@ class InputVariable :
                                    )
         
         def plus_button_step_clicked():
-            sig_fig = floor(self.stepsize / (10**floor(log10(self.stepsize))))
-            if sig_fig == 1:
-                self.stepsize *= 5
-            if sig_fig == 5: 
-                self.stepsize *= 2
+            
+            # code for ... 1e-3, 5e-3, 1e-2, 5e-2, 1e-1 , ...
+            # sig_fig = floor(self.stepsize / (10**floor(log10(self.stepsize))))
+            # if sig_fig == 1:
+            #     self.stepsize *= 5
+            # if sig_fig == 5: 
+            #     self.stepsize *= 2
+                
+            self.stepsize = min(self.stepsize_upper_bound, self.stepsize + variable_resolution)
+                
             self.step_div.text = f"""
             <center><p> Stepsize :  {self.stepsize:.1E} {self.unit} </p></center>
                 """
@@ -103,11 +121,17 @@ class InputVariable :
                                    )
         
         def minus_button_step_clicked():
-            sig_fig = floor(self.stepsize / (10**floor(log10(self.stepsize))))
-            if sig_fig == 5:
-                self.stepsize /= 5
-            if sig_fig == 1: 
-                self.stepsize /= 2
+            # code for ... 1e-3, 5e-3, 1e-2, 5e-2, 1e-1 , ...
+            # sig_fig = floor(self.stepsize / (10**floor(log10(self.stepsize))))
+            # if sig_fig == 5:
+            #     self.stepsize /= 5
+            # if sig_fig == 1: 
+            #     self.stepsize /= 2
+                
+            
+            self.stepsize = max(self.stepsize_lower_bound, self.stepsize - variable_resolution)
+                
+                
             self.step_div.text = f"""
             <center><p> Stepsize :  {self.stepsize:.1E} {self.unit} </p></center>
                 """
