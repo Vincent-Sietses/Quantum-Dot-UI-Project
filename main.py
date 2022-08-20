@@ -21,4 +21,4 @@ CALLBACK_TIME_MS = 750
 if UI_MODE == 0 : 
     # import demo.py file from repo
     from demo import run_demo
-    run_demo(CALLBACK_TIME_MS = CALLBACK_TIME_MS)
+    run_demo(plot_title = "Modulus of Polynomial", CALLBACK_TIME_MS = CALLBACK_TIME_MS)

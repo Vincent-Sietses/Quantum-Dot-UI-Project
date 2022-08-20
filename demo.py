@@ -1,6 +1,6 @@
 from bokeh.io import push_notebook, show, output_notebook, curdoc
-from bokeh.palettes import brewer , inferno
-from bokeh.models import ColumnDataSource, Select, ColorBar, BasicTicker, LinearColorMapper, Div, Slider, Spinner
+from bokeh.palettes import brewer , inferno, viridis, cividis 
+from bokeh.models import ColumnDataSource, Select, ColorBar, BasicTicker, LinearColorMapper, Div, Slider, Spinner, Dropdown
 from bokeh.layouts import row, gridplot, column
 from bokeh.plotting import figure, show, output_file
 from bokeh.layouts import layout
@@ -11,32 +11,16 @@ import numpy as np
 
 from input_variable import InputVariable
 
-def run_demo(CALLBACK_TIME_MS = 500):
+def run_demo(plot_title = "Demo plot", CALLBACK_TIME_MS = 500,):
     #TOOLS define the default Bokeh graph tools 
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select"
     
-    # define all variables here using InputVariable
-    measurement_variables = [
-        InputVariable(
-                variable_name="Real part of first root", 
-                unit="", 
-                initial_value=0, ),
-        InputVariable(
-                variable_name="Imaginary part of first root", 
-                unit="", 
-                initial_value=0, ),
-        InputVariable(
-                variable_name="Real part of second root", 
-                unit="", 
-                initial_value=0, ),
-        InputVariable(
-                variable_name="Imaginary part of second root", 
-                unit="", 
-                initial_value=0, ),
-    ]
+    # import variables from variables file
+    from demo_variables import generate_variables
+    measurement_variables = generate_variables()
 
 
-    roots = [0 + 0j, 0 + 0j, ]
+    #roots = [0 + 0j, 0 + 0j, ]
     
     
     
@@ -50,9 +34,9 @@ def run_demo(CALLBACK_TIME_MS = 500):
 
     p_real = figure(title="Modulus of Polynomial ", tools=TOOLS)  
 
-    #p_img = figure(title="Imaginary Part of Polynomial", tools=TOOLS)  
+    
     p_real.sizing_mode = 'scale_width'
-    #p_img.sizing_mode = 'scale_width'
+     
     x , y  = np.linspace(-5, 5, 100) , np.linspace(-5, 5, 100)
     xv, yv = np.meshgrid(x, y, sparse=True)
     initial_image = evaluate_polynomial(xv, yv)
@@ -60,14 +44,14 @@ def run_demo(CALLBACK_TIME_MS = 500):
     start_time = time()
 
 
-    source_real = ColumnDataSource(dict(Hs=[]))
+    image_source = ColumnDataSource(dict(images=[]))
     #source_img = ColumnDataSource(dict(Hs=[]))
 
-    pallette = inferno(56)
+    pallette = inferno(80) # max : 256
 
     color_mapper_real = LinearColorMapper(palette=pallette, low=np.min(np.abs(initial_image)), high=np.max(np.abs(initial_image)))
     #color_mapper_img = LinearColorMapper(palette=pallette, low=np.min(np.imag(initial_image)), high=np.max(np.imag(initial_image)))
-    p_real.image(image="Hs", x=-5, y=-5, dw=10  , dh=10, color_mapper=color_mapper_real,  source = source_real)
+    p_real.image(image="images", x=-5, y=-5, dw=10  , dh=10, color_mapper=color_mapper_real,  source = source_real)
     #p_img.image(image="Hs", x=-5, y=-5, dw=10  , dh=10, color_mapper=color_mapper_img,  source = source_img)
 
     color_bar_real = ColorBar(color_mapper=color_mapper_real,  ticker=BasicTicker(desired_num_ticks=len(pallette)+1),)
@@ -79,8 +63,8 @@ def run_demo(CALLBACK_TIME_MS = 500):
         
 
     def update():
-        newH = create_value()
-        new_data_real = dict(Hs=[np.abs(newH)])
+        newimage= create_value()
+        new_data_real = dict(images=[np.abs(newimage)])
         #new_data_img = dict(Hs=[np.imag(newH)])
         source_real.stream(new_data_real, rollover=0)
         #source_img.stream(new_data_img, rollover=0)
@@ -90,12 +74,23 @@ def run_demo(CALLBACK_TIME_MS = 500):
     p_real.add_layout(color_bar_real, 'right')
     #p_img.add_layout(color_bar_img, 'right')
     
+    color_dropdown = Dropdown(label='Select plot color', menu=['brewer' , 'inferno', 'viridis', 'cividis' ])
+
+
+    def handler(event):
+        #handle dropdown input
+        print(event.item)
+
+
+    color_dropdown.on_click(handler)
     
     lay_out = layout(row(  
                       column(*[v.ui_row for v in measurement_variables]),
-                      column(p_real,# p_img
+                      column(color_dropdown,p_real,# p_img
                              )
     ))
+    
+    
     curdoc().theme = "dark_minimal"
     curdoc().title = "Instrument UI"
     curdoc().add_root(lay_out)
