@@ -1,5 +1,5 @@
 from bokeh.io import push_notebook, show, output_notebook, curdoc
-from bokeh.palettes import brewer , inferno, viridis, cividis 
+from bokeh.palettes import brewer , inferno, viridis, cividis , plasma
 from bokeh.models import ColumnDataSource, Select, ColorBar, BasicTicker, LinearColorMapper, Div, Slider, Spinner, Dropdown
 from bokeh.layouts import row, gridplot, column
 from bokeh.plotting import figure, show, output_file
@@ -10,83 +10,117 @@ import numpy as np
 
 
 from input_variable import InputVariable
+from draw_plot import generate_plot
 
-def run_demo(plot_title = "Demo plot", CALLBACK_TIME_MS = 500,):
+
+def evaluate_polynomial(real, img, measurement_variables):
+    roots = [
+        measurement_variables[0].value + measurement_variables[1].value * 1j,
+        measurement_variables[2].value + measurement_variables[3].value * 1j,
+    ]
+    return np.product([z - real - img*1j for z in roots], axis = 0)
+
+def run_demo(
+                plot_title = "Demo plot", 
+                CALLBACK_TIME_MS = 500,
+                plot_x=-2.5,  # plot axis parameters
+                plot_y=-2.5,  # plot axis parameters
+                plot_dw=5, # plot axis parameters
+                plot_dh=5, # plot axis parameters
+            ):
+    
+    
     #TOOLS define the default Bokeh graph tools 
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select"
+    
+    plot = figure(title= plot_title, tools=TOOLS)  
+    plot.sizing_mode = 'scale_width'
+    
     
     # import variables from variables file
     from demo_variables import generate_variables
     measurement_variables = generate_variables()
 
 
-    #roots = [0 + 0j, 0 + 0j, ]
-    
-    
-    
-    def evaluate_polynomial(real, img):
-        roots = [
-            measurement_variables[0].value + measurement_variables[1].value * 1j,
-            measurement_variables[2].value + measurement_variables[3].value * 1j,
-        ]
-        return np.product([z - real - img*1j for z in roots], axis = 0) 
 
-
-    p_real = figure(title="Modulus of Polynomial ", tools=TOOLS)  
-
-    
-    p_real.sizing_mode = 'scale_width'
-     
     x , y  = np.linspace(-5, 5, 100) , np.linspace(-5, 5, 100)
     xv, yv = np.meshgrid(x, y, sparse=True)
-    initial_image = evaluate_polynomial(xv, yv)
-    #H = np.outer(x,y)
+    initial_image = evaluate_polynomial(xv, yv, measurement_variables)
+    
+    # record time to increase noise overtime
     start_time = time()
 
 
-    image_source = ColumnDataSource(dict(images=[]))
-    #source_img = ColumnDataSource(dict(Hs=[]))
+    source = ColumnDataSource(dict(Hs=[]))
+     
+    color_palette = inferno(80) # max : 256
+ 
+    color_mapper = LinearColorMapper(palette=color_palette, 
+                                    low=np.min(np.abs(initial_image)), 
+                                    high=np.max(np.abs(initial_image)))
+    
 
-    pallette = inferno(80) # max : 256
+    img = plot.image(image='Hs', 
+                 x=plot_x, 
+                 y=plot_y, 
+                 dw=plot_dw, 
+                 dh=plot_dh, 
+                 color_mapper=color_mapper,  
+                 source = source)
+    
+    color_bar = ColorBar(color_mapper=color_mapper,  ticker=BasicTicker(desired_num_ticks=len(color_palette)+1),)
+    
+    plot.add_layout(color_bar, 'right')
 
-    color_mapper_real = LinearColorMapper(palette=pallette, low=np.min(np.abs(initial_image)), high=np.max(np.abs(initial_image)))
-    #color_mapper_img = LinearColorMapper(palette=pallette, low=np.min(np.imag(initial_image)), high=np.max(np.imag(initial_image)))
-    p_real.image(image="images", x=-5, y=-5, dw=10  , dh=10, color_mapper=color_mapper_real,  source = source_real)
-    #p_img.image(image="Hs", x=-5, y=-5, dw=10  , dh=10, color_mapper=color_mapper_img,  source = source_img)
-
-    color_bar_real = ColorBar(color_mapper=color_mapper_real,  ticker=BasicTicker(desired_num_ticks=len(pallette)+1),)
-    #color_bar_img = ColorBar(color_mapper=color_mapper_img,  ticker=BasicTicker(desired_num_ticks=len(pallette)+1),)
 
     def create_value():
-        P = evaluate_polynomial(xv, yv)
-        return P + P * 0.02 * np.sqrt(time() - start_time)* np.random.rand(* P.shape)
+        P = evaluate_polynomial(xv, yv, measurement_variables)
+        return np.abs(P + P * 0.02 * np.sqrt(time() - start_time)* np.random.rand(* P.shape) ) 
         
 
-    def update():
+    def update(new_color_palette = None):
+        
         newimage= create_value()
-        new_data_real = dict(images=[np.abs(newimage)])
-        #new_data_img = dict(Hs=[np.imag(newH)])
-        source_real.stream(new_data_real, rollover=0)
-        #source_img.stream(new_data_img, rollover=0)
+        new_data = dict(Hs=[newimage])
+        source.stream(new_data , rollover=1)
         
+        if new_color_palette:
+            
+            img.glyph.color_mapper = LinearColorMapper(palette=new_color_palette, 
+                                    low=np.min(newimage), 
+                                    high=np.max(newimage))
+            color_bar.color_mapper.update(palette=new_color_palette, 
+                                    low=np.min(newimage), 
+                                    high=np.max(newimage))
+            
+            
+         
+         
     
-   
-    p_real.add_layout(color_bar_real, 'right')
-    #p_img.add_layout(color_bar_img, 'right')
-    
-    color_dropdown = Dropdown(label='Select plot color', menu=['brewer' , 'inferno', 'viridis', 'cividis' ])
+    color_dropdown = Dropdown(label='Select plot color', menu=['brewer', 'plasma' , 'inferno', 'viridis', 'cividis' ])
 
 
-    def handler(event):
+    def dropdown_handler(event):
         #handle dropdown input
-        print(event.item)
-
-
-    color_dropdown.on_click(handler)
+        color_palette = None
+        if event.item == 'brewer':
+            color_palette = brewer['RdYlBu'][10]
+        elif event.item == "inferno":
+            color_palette = inferno(80)
+        elif event.item == "viridis":
+            color_palette = viridis(80)
+        elif event.item == 'plasma':
+            color_palette = plasma(80)
+        else:
+            color_palette = cividis(80)
+        
+        update(new_color_palette=color_palette)
+        
+    color_dropdown.on_click(dropdown_handler)
     
     lay_out = layout(row(  
                       column(*[v.ui_row for v in measurement_variables]),
-                      column(color_dropdown,p_real,# p_img
+                      column(color_dropdown,plot, 
                              )
     ))
     

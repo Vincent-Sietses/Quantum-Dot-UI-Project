@@ -1,5 +1,5 @@
 from bokeh.io import push_notebook, show, output_notebook, curdoc
-from bokeh.palettes import brewer , inferno, viridis, cividis 
+from bokeh.palettes import brewer , inferno, viridis, cividis , plasma
 from bokeh.models import ColumnDataSource, Select, ColorBar, BasicTicker, LinearColorMapper, Div, Slider, Spinner, Dropdown
 from bokeh.layouts import row, gridplot, column
 from bokeh.plotting import figure, show, output_file
@@ -22,14 +22,16 @@ def generate_plot(plot_title,
     
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select"
     
-    plot = figure(title="Modulus of Polynomial ", tools=TOOLS)  
-    
+    plot = figure(title= plot_title, tools=TOOLS)  
     plot.sizing_mode = 'scale_width'
     
-    color_mapper = LinearColorMapper(palette=pallette, low=np.min(np.abs(initial_image)), high=np.max(np.abs(initial_image)))
+    
+    color_mapper = LinearColorMapper(palette=palette, 
+                                    low=np.min(np.abs(initial_image)), 
+                                    high=np.max(np.abs(initial_image)))
     
     
-    p_real.image(image="images", 
+    plot.image(image="images", 
                  x=x, 
                  y=y, 
                  dw=dw  , 
@@ -37,3 +39,8 @@ def generate_plot(plot_title,
                  color_mapper=color_mapper,  
                  source = image_source)
     
+    color_bar = ColorBar(color_mapper=color_mapper,  ticker=BasicTicker(desired_num_ticks=len(palette)+1),)
+    
+    plot.add_layout(color_bar, 'right')
+    
+    return plot
