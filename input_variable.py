@@ -17,27 +17,29 @@ class InputVariable :
     Its purpose is to link the UI and the measurement 
     """
     def __init__(self,
+                 set_variable ,
+                 get_variable , 
                  variable_name: str = "generic variable",
                  unit : str = "", initial_value : float = 0,
                  initial_stepsize: float = None,
                  variable_resolution : float = 2e-5,
                  stepsize_lower_bound : float = 1e-6,
                  stepsize_upper_bound : float = 1,
-                 ui_precision = 2
                  ): 
+        self.get_variable = get_variable
+        self.set_variable = set_variable
         self.unit = unit
-        self.value = initial_value
+        self.value = self.get_variable()
+        
         if initial_stepsize:
             self.stepsize = initial_stepsize
         else:
             self.stepsize = max(stepsize_lower_bound,  min(10 * variable_resolution, stepsize_upper_bound))
+        
         self.variable_name = variable_name
         self.variable_resolution = variable_resolution
         self.stepsize_lower_bound = stepsize_lower_bound
         self.stepsize_upper_bound = stepsize_upper_bound
-        
-         # get least significant digit
-        self.ui_precision = ui_precision
         
         
         self.ui_row = self.create_widget()
@@ -50,7 +52,7 @@ class InputVariable :
             <center><p> {self.variable_name} :  {self.value:E} {self.unit} </p></center>
                 """,
                  style={'text-align': 'center',  'color': 'black'},
-    width=200,
+    width=150,
     height=80
         )
         
@@ -59,7 +61,7 @@ class InputVariable :
             <center><p> Stepsize :  {self.stepsize:E} {self.unit} </p></center>
                 """,
                  style={'text-align': 'center',  'color': 'black'},
-    width=200,
+    width=150,
     height=80
         )
         
@@ -70,7 +72,9 @@ class InputVariable :
                                    )
         
         def plus_button_clicked():
+            self.value = get_variable()
             self.value += self.stepsize 
+            self.set_variable(self.value) 
             self.value_div.text = f"""
             <center><p> {self.variable_name} :  {self.value:E} {self.unit} </p></center>
                 """
@@ -86,7 +90,9 @@ class InputVariable :
                                    )
         
         def minus_button_clicked():
+            self.value = get_variable()
             self.value -= self.stepsize 
+            self.set_variable(self.value)
             self.value_div.text = f"""
             <center><p> {self.variable_name} :  {self.value:E} {self.unit} </p></center>
                 """
@@ -103,12 +109,6 @@ class InputVariable :
         
         def plus_button_step_clicked():
             
-            # code for ... 1e-3, 5e-3, 1e-2, 5e-2, 1e-1 , ...
-            # sig_fig = floor(self.stepsize / (10**floor(log10(self.stepsize))))
-            # if sig_fig == 1:
-            #     self.stepsize *= 5
-            # if sig_fig == 5: 
-            #     self.stepsize *= 2
                 
             self.stepsize = min(self.stepsize_upper_bound, self.stepsize + self.variable_resolution)
                 
@@ -127,13 +127,7 @@ class InputVariable :
                                    )
         
         def minus_button_step_clicked():
-            # code for ... 1e-3, 5e-3, 1e-2, 5e-2, 1e-1 , ...
-            # sig_fig = floor(self.stepsize / (10**floor(log10(self.stepsize))))
-            # if sig_fig == 5:
-            #     self.stepsize /= 5
-            # if sig_fig == 1: 
-            #     self.stepsize /= 2
-                
+           
             
             self.stepsize = max(self.stepsize_lower_bound, self.stepsize - self.variable_resolution)
                 

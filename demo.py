@@ -23,18 +23,18 @@ def evaluate_polynomial(real, img, measurement_variables):
 def run_demo(
                 plot_title = "Demo plot", 
                 CALLBACK_TIME_MS = 500,
-                plot_x=-2.5,  # plot axis parameters
-                plot_y=-2.5,  # plot axis parameters
-                plot_dw=5, # plot axis parameters
-                plot_dh=5, # plot axis parameters
+                plot_x=-1,  # plot axis parameters
+                plot_y=-1,  # plot axis parameters
+                plot_dw=2, # plot axis parameters
+                plot_dh=2, # plot axis parameters
             ):
     
     
     #TOOLS define the default Bokeh graph tools 
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save,box_select"
     
-    plot = figure(title= plot_title, tools=TOOLS)  
-    plot.sizing_mode = 'scale_width'
+    plot = figure(title= plot_title, tools=TOOLS,  plot_width=400, plot_height=400)  
+    #plot.sizing_mode = 'scale_width'
     
     
     # import variables from variables file
@@ -43,7 +43,7 @@ def run_demo(
 
 
 
-    x , y  = np.linspace(-5, 5, 100) , np.linspace(-5, 5, 100)
+    x , y  = np.linspace(plot_x, plot_x + plot_dw, 100) , np.linspace(plot_y, plot_y + plot_dh, 100)
     xv, yv = np.meshgrid(x, y, sparse=True)
     initial_image = evaluate_polynomial(xv, yv, measurement_variables)
     

@@ -6,7 +6,12 @@
 
 Project requires Python and Bokeh to be installed in an Anaconda environments
 
+The QD UI Demo notebook contains all necessary information to use the LivePlotter module
 
+Proves live Bokeh plotting, control of widgets and functions to interface with equipment
+
+
+Obsolete : 
 For Bokeh to open a browser tab with the interactive UI, run
 ``` bokeh serve --show <filename> ``` 
 

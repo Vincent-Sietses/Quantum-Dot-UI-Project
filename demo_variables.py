@@ -14,7 +14,7 @@ def generate_variables():
                 variable_resolution  = 2e-4,
                 stepsize_lower_bound = 1e-6,
                 stepsize_upper_bound = 1,
-                ui_precision = 2),
+                ),
         InputVariable(
                 variable_name="Imaginary part of first root", 
                 unit="", 
@@ -23,7 +23,7 @@ def generate_variables():
                 variable_resolution  = 2e-4,
                 stepsize_lower_bound = 1e-6,
                 stepsize_upper_bound = 1,
-                ui_precision = 2),
+                ),
         InputVariable(
                 variable_name="Real part of second root", 
                 unit="", 
@@ -32,7 +32,7 @@ def generate_variables():
                 variable_resolution  = 2e-4,
                 stepsize_lower_bound = 1e-6,
                 stepsize_upper_bound = 1,
-                ui_precision = 2),
+                ),
         InputVariable(
                 variable_name="Imaginary part of second root", 
                 unit="", 
@@ -41,5 +41,5 @@ def generate_variables():
                 variable_resolution  = 2e-4,
                 stepsize_lower_bound = 1e-6,
                 stepsize_upper_bound = 1,
-                ui_precision = 2),
+                ),
     ]
