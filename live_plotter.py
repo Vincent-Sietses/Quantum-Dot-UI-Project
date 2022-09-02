@@ -8,7 +8,7 @@ from bokeh.layouts import layout
 from random import random
 from time import time
 
-from bokeh.core.validation import silence
+from bokeh.core.validation import silence 
 from bokeh.core.validation.warnings import EMPTY_LAYOUT, MISSING_RENDERERS
 
 import numpy as np
@@ -29,7 +29,7 @@ class LivePlotter:
         # List to store InputVariable objects , which contain the widgets and setters / getters 
         self.variable_list = []
         
-        output_notebook()
+        #output_notebook()
 
         
     def set_callback_time(self, val):
@@ -40,7 +40,6 @@ class LivePlotter:
         """ Takes a string as the new x axis label """
         self.plot.xaxis.axis_label = label
         
-    
     def set_y_label(self, label : str):
         """ Takes a string as the new y axis label """
         self.plot.yaxis.axis_label = label
@@ -85,6 +84,9 @@ class LivePlotter:
         
     def bkapp(self, doc):
         """ Bokeh document app""" 
+        
+        allow_websocket_origin=["*"]
+        
         if not self.measurement_function:
             raise ValueError("No measurement function has been defined. Define one by calling set_measurement_function(self,func) ")
         
@@ -114,10 +116,15 @@ class LivePlotter:
         
         color_bar = ColorBar(color_mapper=color_mapper,  ticker=BasicTicker(desired_num_ticks=len(color_palette)+1),)
         
-        dummy = figure(height=300, width=100, toolbar_location=None, min_border=0, outline_line_color=None)
-        dummy.add_layout(color_bar, 'right')
+        color_bar_plot = figure(height=300, width=100, toolbar_location=None, min_border=0, outline_line_color=None)
+        color_bar_plot.add_layout(color_bar, 'right')
 
         def update(new_color_palette = None):
+            """ 
+            Update function called every callbacktime
+            Calls the measurement function
+            Also handles changing the color of the image ( This is necessary because the colormap needs the max and min of the image )
+            """
             newimage= self.measurement_function()
             new_data = dict(images=[newimage])
             source.stream(new_data , rollover=1)
@@ -131,18 +138,19 @@ class LivePlotter:
                 color_bar = ColorBar(color_mapper=img.glyph.color_mapper,  ticker=BasicTicker(desired_num_ticks=len(color_palette)+1),)
         
                 lay_out.children.pop()
-                dummy = figure(height=300, width=100, toolbar_location=None, min_border=0, outline_line_color=None)
-                dummy.add_layout(color_bar, 'right')
-                lay_out.children.append(dummy)
+                color_bar_plot = figure(height=300, width=100, toolbar_location=None, min_border=0, outline_line_color=None)
+                color_bar_plot.add_layout(color_bar, 'right')
+                lay_out.children.append(color_bar_plot)
             
     
         color_dropdown = Dropdown(label='Select plot color', menu=['brewer (red/blue)', 'brewer (Purple/Orange)', 'plasma' , 'inferno', 'viridis', 'cividis' ])
 
 
         def dropdown_handler(event):
-            #handle dropdown input
+            """ Handles a change in the color dropdown menu """
+             
             color_palette = None
-            if event.item == 'brewer (red/blue)':
+            if event.item == 'brewer (Red/Blue)':
                 color_palette = brewer['RdYlBu'][10]
             elif event.item == 'brewer (Purple/Orange)':
                 color_palette = brewer['PuOr'][10]
@@ -155,14 +163,20 @@ class LivePlotter:
             else:
                 color_palette = cividis(80)
             
+           
+            
             update(new_color_palette=color_palette)
         
         color_dropdown.on_click(dropdown_handler)
         
+        # put the widgets in a column 
+        # # need to put the color_bar plot outside of the row, because otherwise the code updating it fails
         lay_out = layout( 
-        row(column(*[v.ui_row for v in self.variable_list]), column(color_dropdown,self.plot,) ,), dummy,
+        row(column(*[v.ui_row for v in self.variable_list]), column(color_dropdown,self.plot,)) , color_bar_plot, 
         )
         
+        
+        ## these lines make sure Bokeh's warnings about the color bar plot are not shown 
         silence(EMPTY_LAYOUT, True)
         silence(MISSING_RENDERERS, True)
         
